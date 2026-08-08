@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bootstrap CloudFormation template for CloudVault AWS integrations.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: cloudvault
+    Description: Name prefix for the resources
+
+Resources:
+  # ── 1. S3 BUCKET (For File Storage) ──
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-storage-${AWS::AccountId}'
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+            ExposedHeaders: [ETag, x-amz-meta-custom-header, Content-Range, Accept-Ranges, Content-Length]
+            MaxAge: 3000
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  # ── 2. DYNAMODB TABLE (For Metadata Storage) ──
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-metadata'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: partitionKey
+          AttributeType: S
+        - AttributeName: sortKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: partitionKey
+          KeyType: HASH
+        - AttributeName: sortKey
+          KeyType: RANGE
+
+  # ── 3. COGNITO USER POOL & CLIENT (For User Authentication) ──
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${ProjectName}-user-pool'
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub '${ProjectName}-web-client'
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false # Required for frontend/browser auth calls
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  # ── 4. AWS LAMBDA (For File Security/Virus Scan simulation) ──
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [lambda.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  ScannerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-security-scanner'
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs20.x
+      Timeout: 10
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log("Scanning file event received:", JSON.stringify(event, null, 2));
+            const fileName = event.fileName || "unknown_file";
+            const fileSize = event.fileSize || 0;
+            
+            // Simulate deep scan latency
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const isBlocked = fileName.endsWith(".exe") || fileName.endsWith(".bat") || fileName.endsWith(".sh");
+            
+            return {
+              statusCode: 200,
+              body: {
+                fileName: fileName,
+                fileSize: fileSize,
+                scanResult: isBlocked ? "INFECTED" : "CLEAN",
+                scanScore: isBlocked ? 99 : 0,
+                threatsFound: isBlocked ? ["Blocked Executable Format"] : [],
+                scannedAt: new Date().toISOString(),
+                scannerId: "cloudvault-lambda-scanner-v1"
+              }
+            };
+          };
+
+  # ── 5. IAM APP USER (Provides credentials for frontend local storage setup) ──
+  AppUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub '${ProjectName}-app-user'
+
+  AppUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref AppUser
+
+  AppUserPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-app-policy'
+      Users:
+        - !Ref AppUser
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3Bucket}'
+              - !Sub 'arn:aws:s3:::${S3Bucket}/*'
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+              - dynamodb:GetItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+              - dynamodb:Query
+              - dynamodb:Scan
+            Resource:
+              - !GetAtt DynamoDBTable.Arn
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !GetAtt ScannerLambda.Arn
+Outputs:
+  AWSRegion:
+    Value: !Ref AWS::Region
+    Description: Use this Region in your app settings
+  S3BucketName:
+    Value: !Ref S3Bucket
+    Description: Use this S3 Bucket Name in your app settings
+  DynamoDBTableName:
+    Value: !Ref DynamoDBTable
+    Description: Use this DynamoDB Table Name in your app settings
+  CognitoUserPoolId:
+    Value: !Ref UserPool
+    Description: Use this Cognito User Pool ID in your app settings
+  CognitoUserPoolClientId:
+    Value: !Ref UserPoolClient
+    Description: Use this Cognito Client ID in your app settings
+  LambdaFunctionName:
+    Value: !Ref ScannerLambda
+    Description: Use this Lambda Function Name in your app settings
+  AWSAccessKeyId:
+    Value: !Ref AppUserAccessKey
+    Description: Copy this Access Key to your app settings
+  AWSSecretAccessKey:
+    Value: !Ref AppUserAccessKey.SecretAccessKey
+    Description: Copy this Secret Key to your app settings (DO NOT share/commit this key)

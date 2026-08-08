@@ -1,0 +1,390 @@
+@import "tailwindcss";
+
+/* ─── Dark mode: class-based strategy ───────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+@theme {
+  /* ── Typography ──────────────────────────────────────────────── */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.8125rem;  /* 13px */
+  --text-base: 0.875rem;   /* 14px */
+  --text-md:   0.9375rem;  /* 15px */
+  --text-lg:   1.0625rem;  /* 17px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+  --text-5xl:  3rem;       /* 48px */
+
+  /* ── Neutral Grayscale (cool-tinted) ─────────────────────────── */
+  --color-neutral-50:  #f8f9fb;
+  --color-neutral-100: #f0f1f5;
+  --color-neutral-200: #e2e4ea;
+  --color-neutral-300: #cdd0d9;
+  --color-neutral-400: #a1a5b2;
+  --color-neutral-500: #7c8191;
+  --color-neutral-600: #5f6474;
+  --color-neutral-700: #464b59;
+  --color-neutral-800: #2e323e;
+  --color-neutral-900: #1a1d27;
+  --color-neutral-950: #0f1117;
+
+  /* ── Primary (Indigo) ───────────────────────────────────────── */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+  --color-primary-950: #1e1b4b;
+
+  /* ── Accent (Violet) ────────────────────────────────────────── */
+  --color-accent-50:  #f5f3ff;
+  --color-accent-100: #ede9fe;
+  --color-accent-200: #ddd6fe;
+  --color-accent-300: #c4b5fd;
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+  --color-accent-700: #6d28d9;
+  --color-accent-800: #5b21b6;
+  --color-accent-900: #4c1d95;
+  --color-accent-950: #2e1065;
+
+  /* ── Semantic: Success (Emerald) ────────────────────────────── */
+  --color-success-light: #d1fae5;
+  --color-success:       #10b981;
+  --color-success-dark:  #065f46;
+
+  /* ── Semantic: Warning (Amber) ──────────────────────────────── */
+  --color-warning-light: #fef3c7;
+  --color-warning:       #f59e0b;
+  --color-warning-dark:  #92400e;
+
+  /* ── Semantic: Error (Rose) ─────────────────────────────────── */
+  --color-error-light: #ffe4e6;
+  --color-error:       #f43f5e;
+  --color-error-dark:  #9f1239;
+
+  /* ── Semantic: Info (Sky) ───────────────────────────────────── */
+  --color-info-light: #e0f2fe;
+  --color-info:       #0ea5e9;
+  --color-info-dark:  #075985;
+
+  /* ── Border Radius ──────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* ── Elevation: Light mode shadows ──────────────────────────── */
+  --shadow-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md:  0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg:  0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl:  0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.04);
+
+  /* ── Elevation: Dark mode glow shadows ─────────────────────── */
+  --shadow-dark-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-dark-md:  0 2px 8px -1px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-dark-lg:  0 4px 16px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-dark-xl:  0 8px 32px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  /* ── Animation: Timing ─────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
+}
+
+/* ─── Semantic CSS Variables (mode-switchable) ────────────────── */
+/*
+  Color scales are duplicated here as hardcoded hex values because
+  Tailwind CSS v4's @theme block tree-shakes tokens that aren't
+  referenced by a utility class. Inline var() references (e.g. in
+  the Design System swatch grid) aren't visible to the tree-shaker,
+  so we pin every step in :root to guarantee availability.
+*/
+:root {
+  /* ── Neutral (hardcoded for var() access) ─────────────────── */
+  --color-neutral-50:  #f8f9fb;
+  --color-neutral-100: #f0f1f5;
+  --color-neutral-200: #e2e4ea;
+  --color-neutral-300: #cdd0d9;
+  --color-neutral-400: #a1a5b2;
+  --color-neutral-500: #7c8191;
+  --color-neutral-600: #5f6474;
+  --color-neutral-700: #464b59;
+  --color-neutral-800: #2e323e;
+  --color-neutral-900: #1a1d27;
+  --color-neutral-950: #0f1117;
+
+  /* ── Primary / Indigo (hardcoded for var() access) ─────────── */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+  --color-primary-950: #1e1b4b;
+
+  /* ── Accent / Violet (hardcoded for var() access) ──────────── */
+  --color-accent-50:  #f5f3ff;
+  --color-accent-100: #ede9fe;
+  --color-accent-200: #ddd6fe;
+  --color-accent-300: #c4b5fd;
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+  --color-accent-700: #6d28d9;
+  --color-accent-800: #5b21b6;
+  --color-accent-900: #4c1d95;
+  --color-accent-950: #2e1065;
+
+  /* ── Semantic (hardcoded for var() access) ──────────────────── */
+  --color-success-light: #d1fae5;
+  --color-success:       #10b981;
+  --color-success-dark:  #065f46;
+  --color-warning-light: #fef3c7;
+  --color-warning:       #f59e0b;
+  --color-warning-dark:  #92400e;
+  --color-error-light:   #ffe4e6;
+  --color-error:         #f43f5e;
+  --color-error-dark:    #9f1239;
+  --color-info-light:    #e0f2fe;
+  --color-info:          #0ea5e9;
+  --color-info-dark:     #075985;
+
+  /* Surface */
+  --cv-bg:              #f8f9fb;
+  --cv-bg-subtle:       #ffffff;
+  --cv-bg-muted:        #f0f1f5;
+  --cv-bg-elevated:     #ffffff;
+
+  /* Text */
+  --cv-text:            #1a1d27;
+  --cv-text-secondary:  #5f6474;
+  --cv-text-muted:      #a1a5b2;
+  --cv-text-inverse:    #ffffff;
+
+  /* Borders */
+  --cv-border:          #e2e4ea;
+  --cv-border-strong:   #cdd0d9;
+
+  /* Elevation */
+  --cv-shadow-sm:       0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --cv-shadow-md:       0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --cv-shadow-lg:       0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --cv-shadow-xl:       0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.04);
+
+  /* Focus ring */
+  --cv-ring:            #8b5cf6;
+  --cv-ring-offset:     #ffffff;
+}
+
+.dark {
+  --cv-bg:              #0f1117;
+  --cv-bg-subtle:       #1a1d27;
+  --cv-bg-muted:        #2e323e;
+  --cv-bg-elevated:     #2e323e;
+
+  --cv-text:            #f8f9fb;
+  --cv-text-secondary:  #a1a5b2;
+  --cv-text-muted:      #5f6474;
+  --cv-text-inverse:    #0f1117;
+
+  --cv-border:          #2e323e;
+  --cv-border-strong:   #464b59;
+
+  --cv-shadow-sm:       0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --cv-shadow-md:       0 2px 8px -1px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --cv-shadow-lg:       0 4px 16px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --cv-shadow-xl:       0 8px 32px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  --cv-ring:            #a78bfa;
+  --cv-ring-offset:     #0f1117;
+}
+
+/* ─── Base Resets & Globals ───────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  background-color: var(--cv-bg);
+  color: var(--cv-text);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  transition: background-color var(--duration-base) var(--ease-out-expo),
+              color var(--duration-base) var(--ease-out-expo);
+}
+
+/* ─── Focus ring utility ─────────────────────────────────────── */
+.cv-focus-ring {
+  outline: none;
+}
+.cv-focus-ring:focus-visible {
+  outline: 2px solid var(--cv-ring);
+  outline-offset: 2px;
+}
+
+/* ─── Skeleton shimmer ───────────────────────────────────────── */
+@keyframes cv-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.cv-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--cv-bg-muted) 25%,
+    var(--cv-bg-elevated) 50%,
+    var(--cv-bg-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: cv-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .cv-skeleton {
+    animation: none;
+  }
+}
+
+/* ─── Heading typography defaults ────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+h1 { letter-spacing: -0.04em; }
+h2 { letter-spacing: -0.03em; }
+
+/* ─── Scrollbar styling (subtle) ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-300);
+  border-radius: var(--radius-full);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-700);
+}
+
+/* ─── SVG check-draw animation (for auth success states) ─────── */
+@keyframes cv-draw-check {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.cv-draw-check {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: cv-draw-check 0.6s var(--ease-out-expo) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-draw-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ─── Tailwind v4 Token Safelist ─────────────────────────────
+   Force the compiler to emit every color-scale utility so that
+   var(--color-*) references in inline styles always resolve.
+   These classes are never rendered — they exist solely to
+   prevent tree-shaking.
+   ─────────────────────────────────────────────────────────── */
+@layer utilities {
+  .cv-pin-primary {
+    color: theme(--color-primary-50) theme(--color-primary-100) theme(--color-primary-200)
+           theme(--color-primary-300) theme(--color-primary-400) theme(--color-primary-500)
+           theme(--color-primary-600) theme(--color-primary-700) theme(--color-primary-800)
+           theme(--color-primary-900) theme(--color-primary-950);
+  }
+  .cv-pin-accent {
+    color: theme(--color-accent-50) theme(--color-accent-100) theme(--color-accent-200)
+           theme(--color-accent-300) theme(--color-accent-400) theme(--color-accent-500)
+           theme(--color-accent-600) theme(--color-accent-700) theme(--color-accent-800)
+           theme(--color-accent-900) theme(--color-accent-950);
+  }
+  .cv-pin-neutral {
+    color: theme(--color-neutral-50) theme(--color-neutral-100) theme(--color-neutral-200)
+           theme(--color-neutral-300) theme(--color-neutral-400) theme(--color-neutral-500)
+           theme(--color-neutral-600) theme(--color-neutral-700) theme(--color-neutral-800)
+           theme(--color-neutral-900) theme(--color-neutral-950);
+  }
+}
+
+/* ─── Auth decorative panel: floating orb animations ────────── */
+@keyframes cv-float1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -40px) scale(1.05); }
+  66%      { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes cv-float2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(-25px, 30px) scale(1.08); }
+  50%      { transform: translate(15px, -20px) scale(0.96); }
+  75%      { transform: translate(-10px, -15px) scale(1.03); }
+}
+
+@keyframes cv-float3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%      { transform: translate(20px, 25px) scale(1.04); }
+  80%      { transform: translate(-15px, -30px) scale(0.97); }
+}
+
+/* ─── File Manager ───────────────────────────────────────────── */
+
+/* Responsive file grid — auto-fill with minimum card width */
+.cv-file-grid {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+
+@media (min-width: 640px) {
+  .cv-file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  }
+}
+
