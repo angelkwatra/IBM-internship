@@ -351,6 +351,7 @@ export async function getFiles(
   sortDir: SortDirection = "asc",
   filterType?: FileItemType
 ): Promise<FolderContents> {
+  if (isAWSEnabled()) return dynamoFS.getFiles(workspaceId, folderId, sortBy, sortDir, filterType);
   await delay();
   const tree = getTree(workspaceId);
 
@@ -412,6 +413,7 @@ export async function createFolder(
   parentId: string | null,
   name: string
 ): Promise<FileSystemItem> {
+  if (isAWSEnabled()) return dynamoFS.createFolder(workspaceId, name, parentId);
   await delay();
   const tree = getTree(workspaceId);
 
@@ -553,6 +555,7 @@ export async function deleteItems(
   workspaceId: string,
   itemIds: string[]
 ): Promise<{ deletedCount: number; childrenCount: number }> {
+  if (isAWSEnabled()) return dynamoFS.deleteItems(workspaceId, itemIds);
   await delay();
   const tree = getTree(workspaceId);
 
@@ -603,6 +606,7 @@ export async function countChildren(
   workspaceId: string,
   itemIds: string[]
 ): Promise<number> {
+  if (isAWSEnabled()) return dynamoFS.countChildren(workspaceId, itemIds);
   await delay(100, 200);
   const tree = getTree(workspaceId);
   let count = 0;
@@ -901,6 +905,7 @@ export async function checkRestoreConflict(
   itemId: string,
   restoreToRoot = false
 ): Promise<FileSystemItem | null> {
+  if (isAWSEnabled()) return dynamoFS.checkRestoreConflict(workspaceId, itemId, restoreToRoot);
   await delay(50, 100);
   const trashTree = getTrashTree(workspaceId);
   const trashed = trashTree.find(t => t.id === itemId);
@@ -922,6 +927,7 @@ export async function restoreTrashedItem(
     restoreToRoot?: boolean;
   } = {}
 ): Promise<FileSystemItem> {
+  if (isAWSEnabled()) return dynamoFS.restoreTrashedItem(workspaceId, itemId) as any;
   await delay(200, 400);
   const trashTree = getTrashTree(workspaceId);
   const index = trashTree.findIndex(t => t.id === itemId);
@@ -983,6 +989,7 @@ export async function restoreTrashedItems(
     restoreToRoot?: boolean;
   } = {}
 ): Promise<FileSystemItem[]> {
+  if (isAWSEnabled()) return dynamoFS.restoreTrashedItems(workspaceId, itemIds) as any;
   const restored: FileSystemItem[] = [];
   for (const id of itemIds) {
     const item = await restoreTrashedItem(workspaceId, id, options);
@@ -1156,6 +1163,7 @@ export async function getShareSettings(
   arg1: string,
   arg2?: string
 ): Promise<Share> {
+  if (isAWSEnabled()) return dynamoFS.getShareSettings(arg1, arg2 || "") as any;
   const { workspaceId, fileId } = resolveArgs(arg1, arg2);
   await delay(100, 200);
   const shares = getShareTree(workspaceId);
