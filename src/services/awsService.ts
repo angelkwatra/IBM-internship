@@ -73,18 +73,21 @@ export function saveAWSConfig(config: AWSConfig): void {
 }
 
 export function isAWSEnabled(): boolean {
-  const enabled = localStorage.getItem("cv_aws_enabled") === "true";
   const config = getAWSConfig();
-  return (
-    enabled &&
+  // Auto-enable if all required credentials are present (from .env or localStorage)
+  const hasAllCredentials =
     !!config.region &&
     !!config.accessKeyId &&
     !!config.secretAccessKey &&
     !!config.s3Bucket &&
     !!config.dynamoTable &&
     !!config.cognitoUserPoolId &&
-    !!config.cognitoClientId
-  );
+    !!config.cognitoClientId;
+
+  // If user explicitly disabled AWS via toggle, respect that
+  const explicitlyDisabled = localStorage.getItem("cv_aws_enabled") === "false";
+
+  return hasAllCredentials && !explicitlyDisabled;
 }
 
 export function setAWSEnabled(enabled: boolean): void {
