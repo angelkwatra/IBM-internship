@@ -191,5 +191,5 @@ Outputs:
     Value: !Ref AppUserAccessKey
     Description: Copy this Access Key to your app settings
   AWSSecretAccessKey:
-    Value: !Ref AppUserAccessKey.SecretAccessKey
+    Value: !GetAtt AppUserAccessKey.SecretAccessKey
     Description: Copy this Secret Key to your app settings (DO NOT share/commit this key)
