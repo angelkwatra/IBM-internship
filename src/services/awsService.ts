@@ -56,6 +56,13 @@ const DEFAULT_CONFIG: AWSConfig = {
 // ── Configuration State ──────────────────────────────────────────
 
 export function getAWSConfig(): AWSConfig {
+  // .env values always take priority over localStorage (prevents stale cached credentials)
+  const hasEnvCredentials = !!import.meta.env.VITE_AWS_ACCESS_KEY_ID;
+  if (hasEnvCredentials) {
+    return DEFAULT_CONFIG;
+  }
+
+  // Fallback: read from localStorage (for manual Settings UI configuration)
   try {
     const stored = localStorage.getItem("cv_aws_config");
     if (stored) {
